@@ -6,7 +6,8 @@ import 'package:injectable/injectable.dart';
 import '../utils/logger.dart';
 
 /// Service for providing contextual information based on location data
-/// Integrates the Dickens walking tour data as conversation context
+/// Integrates the Dickens walking tour data with gravitational field storytelling system
+/// Implements narrative layering: wide shots (district), medium shots (connections), close-ups (details)
 @lazySingleton
 class LocationContextService {
   static final List<LocationData> _walkingTourData = [
@@ -44,6 +45,14 @@ class LocationContextService {
       lat: 51.5055,
       lng: -0.091,
       talkingPoints: "Borough Market is one of London's oldest and most famous food markets, dating back to at least the 12th century. In Dickens's era, it was a chaotic and earthy place, with traders hawking produce, meat, and fish from stalls and barrows. Dickens drew inspiration from such lively street scenes for novels like \"The Pickwick Papers\" and \"Oliver Twist,\" where markets are depicted as microcosms of city life—full of energy, drama, and characters. Today, Borough Market has transformed into a gourmet food destination, but its cobbled lanes and railway arches still echo with history, making it an essential stop for both literary pilgrims and food lovers.",
+      gravity: GravityLevel.exceptional,
+      district: "Southwark - Borough District",
+      narrativeLayers: {
+        NarrativeLayer.wideShot: "Borough Market anchors Southwark's identity as London's historic food hub, representing centuries of commerce flowing from countryside to city.",
+        NarrativeLayer.mediumShot: "From Borough Market, Dickens would walk to Southwark Cathedral, observing the bustling trade that connected rural England to urban London's hungry masses.",
+        NarrativeLayer.closeUp: "The market's Victorian iron and glass structures house the same trading energy that Dickens captured in his novels—hawkers, characters, and urban drama.",
+      },
+      connectedLocationIds: [4, 6], // Southwark Cathedral, St Thomas's Church
     ),
     LocationData(
       id: 6,
@@ -79,6 +88,14 @@ class LocationContextService {
       lat: 51.5013,
       lng: -0.093,
       talkingPoints: "Marshalsea Prison is infamous in Dickensian lore as the place where the author's father was imprisoned for debt in 1824. This traumatic family episode had a profound effect on the young Dickens and echoes through his work, most notably in \"Little Dorrit.\" Although the prison itself is gone, sections of its high brick wall survive in Angel Place, radiating a palpable sense of confinement and hardship. Standing here, one can feel the shadow of Victorian debtors' prisons and their devastating impact on families.",
+      gravity: GravityLevel.essential,
+      district: "Southwark - Borough High Street",
+      narrativeLayers: {
+        NarrativeLayer.wideShot: "Southwark housed London's debtors' prisons, where the Victorian system of justice trapped entire families in cycles of poverty and shame.",
+        NarrativeLayer.mediumShot: "Young Dickens walked from his lodging near Warren's Blacking Factory to visit his father here, a journey that shaped his understanding of social injustice.",
+        NarrativeLayer.closeUp: "Behind these surviving brick walls, John Dickens lived while his 12-year-old son worked in the blacking factory—the trauma that became 'Little Dorrit.'",
+      },
+      connectedLocationIds: [11, 12], // St George the Martyr, Trinity Church Square
     ),
     LocationData(
       id: 11,
@@ -227,12 +244,62 @@ Focus on bringing the history and literature to life for someone exploring this 
 }
 
 /// Data model for walking tour locations
+/// Narrative importance levels following the gravitational field system
+enum GravityLevel {
+  /// Level 1-3: Hidden gems and local curiosities
+  hidden(1, "Hidden gem - for wandering explorers"),
+  local(2, "Local interest - worth a detour if nearby"), 
+  notable(3, "Notable point - interesting discovery"),
+  
+  /// Level 4-6: Established attractions
+  worthy(4, "Worthy visit - solid cultural value"),
+  recommended(5, "Recommended stop - enriching experience"),
+  significant(6, "Significant site - important to the area"),
+  
+  /// Level 7-10: Major landmarks and must-sees
+  major(7, "Major attraction - worth planning around"),
+  exceptional(8, "Exceptional site - justifies a detour"),
+  landmark(9, "Iconic landmark - destination worthy"),
+  essential(10, "Essential experience - worth a special journey");
+  
+  const GravityLevel(this.value, this.description);
+  final int value;
+  final String description;
+}
+
+/// Narrative perspective following montage theory
+enum NarrativeLayer {
+  /// Wide shot: District/neighborhood overview
+  wideShot("District context and broad historical background"),
+  
+  /// Medium shot: Connections and transitions between locations
+  mediumShot("Transitional context linking locations and themes"),
+  
+  /// Close-up: Specific landmark details and intimate stories
+  closeUp("Detailed facts and intimate historical moments");
+  
+  const NarrativeLayer(this.description);
+  final String description;
+}
+
 class LocationData {
   final int id;
   final String name;
   final double lat;
   final double lng;
   final String talkingPoints;
+  
+  /// Gravitational field importance (1-10)
+  final GravityLevel gravity;
+  
+  /// District/neighborhood for wide-shot context
+  final String district;
+  
+  /// Narrative layers for montage storytelling
+  final Map<NarrativeLayer, String> narrativeLayers;
+  
+  /// Connections to other locations for medium-shot storytelling
+  final List<int> connectedLocationIds;
 
   const LocationData({
     required this.id,
@@ -240,8 +307,90 @@ class LocationData {
     required this.lat,
     required this.lng,
     required this.talkingPoints,
+    this.gravity = GravityLevel.notable,
+    this.district = "Southwark",
+    this.narrativeLayers = const {},
+    this.connectedLocationIds = const [],
   });
+  
+  /// Get narrative content for specific layer with optional custom filters
+  String? getNarrativeForLayer(
+    NarrativeLayer layer, {
+    List<String>? wideShotKeywords,
+    List<String>? mediumShotKeywords,
+    int? closeUpSentenceCount,
+  }) {
+    return narrativeLayers[layer] ?? 
+           _extractLayerFromTalkingPoints(
+             layer, 
+             wideShotKeywords: wideShotKeywords,
+             mediumShotKeywords: mediumShotKeywords,
+             closeUpSentenceCount: closeUpSentenceCount,
+           );
+  }
+  
+  /// Extract narrative layer from existing talking points using flexible keyword matching
+  String _extractLayerFromTalkingPoints(
+    NarrativeLayer layer, {
+    List<String>? wideShotKeywords,
+    List<String>? mediumShotKeywords,
+    int? closeUpSentenceCount,
+  }) {
+    final sentences = talkingPoints.split('. ');
+    
+    switch (layer) {
+      case NarrativeLayer.wideShot:
+        final keywords = wideShotKeywords ?? _getDefaultWideShotKeywords();
+        final filtered = sentences.where((s) => 
+          keywords.any((keyword) => s.toLowerCase().contains(keyword.toLowerCase()))
+        ).join('. ');
+        return filtered.isEmpty ? sentences.take(1).join('. ') : filtered;
+        
+      case NarrativeLayer.mediumShot:
+        final keywords = mediumShotKeywords ?? _getDefaultMediumShotKeywords();
+        final filtered = sentences.where((s) => 
+          keywords.any((keyword) => s.toLowerCase().contains(keyword.toLowerCase()))
+        ).join('. ');
+        return filtered.isEmpty ? sentences.skip(1).take(2).join('. ') : filtered;
+        
+      case NarrativeLayer.closeUp:
+        final count = closeUpSentenceCount ?? 2;
+        return sentences.take(count).join('. ');
+    }
+  }
+  
+  /// Default wide shot keywords - can be overridden per content type
+  List<String> _getDefaultWideShotKeywords() {
+    return [
+      'district', 'area', 'neighborhood', 'region', 'vicinity',
+      'Victorian', 'centuries', 'period', 'era', 'time',
+      'historic', 'ancient', 'traditional', 'established',
+      'community', 'quarter', 'locality'
+    ];
+  }
+  
+  /// Default medium shot keywords - can be overridden per content type
+  List<String> _getDefaultMediumShotKeywords() {
+    return [
+      'would have', 'likely', 'probably', 'might have',
+      'connected', 'nearby', 'close to', 'adjacent',
+      'relationship', 'link', 'association', 'ties',
+      'journey', 'walk', 'path', 'route',
+      'transition', 'moving', 'crossing'
+    ];
+  }
+  
+  /// Check if this location should be mentioned based on user movement pattern
+  bool shouldMentionForExploration({required bool isSlowWandering, required bool isDirectMovement}) {
+    if (isSlowWandering) {
+      return gravity.value >= 1; // Mention everything for thorough explorers
+    } else if (isDirectMovement) {
+      return gravity.value >= 7; // Only major landmarks for focused travelers
+    } else {
+      return gravity.value >= 3; // Balanced exploration
+    }
+  }
 
   @override
-  String toString() => 'LocationData(id: $id, name: $name, lat: $lat, lng: $lng)';
+  String toString() => 'LocationData(id: $id, name: $name, gravity: ${gravity.value}, district: $district)';
 }

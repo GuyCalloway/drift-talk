@@ -11,6 +11,8 @@ import '../../../../core/services/location_context_service.dart';
 import '../../../../core/services/logo_selection_service.dart';
 import '../../../../core/services/text_to_speech_service.dart';
 import '../../../../core/services/mock_location_text_service.dart';
+import '../../../../core/services/narrative_manager_service.dart';
+import '../../../../core/utils/logger.dart';
 import '../../../../core/di/injection_container.dart';
 
 class ScrollingTextItem {
@@ -53,6 +55,7 @@ class _VoiceChatPageState extends State<VoiceChatPage> with TickerProviderStateM
   late final LogoSelectionService _logoService;
   late final TextToSpeechService _ttsService;
   late final MockLocationTextService _mockLocationTextService;
+  late final NarrativeManagerService _narrativeManager;
   bool _isRefreshing = false;
   
   // Mode switching
@@ -75,6 +78,7 @@ class _VoiceChatPageState extends State<VoiceChatPage> with TickerProviderStateM
     _logoService = getIt<LogoSelectionService>();
     _ttsService = getIt<TextToSpeechService>();
     _mockLocationTextService = getIt<MockLocationTextService>();
+    _narrativeManager = getIt<NarrativeManagerService>();
     
     // Initialize connection
     context.read<VoiceChatBloc>().add(const VoiceChatConnectRequested());
@@ -390,23 +394,48 @@ class _VoiceChatPageState extends State<VoiceChatPage> with TickerProviderStateM
   }
   
   Future<void> _speakLocationText() async {
-    addScrollingText('Fetching location data...');
+    addScrollingText('Generating narrative content...');
     
     try {
-      final locationData = await _mockLocationTextService.fetchLocationText();
-      if (locationData == null) {
-        addScrollingText('Failed to fetch location data');
+      // Get current location from Dickens tour data
+      final allLocations = _locationService.getAllLocations();
+      final currentLocation = allLocations[_currentLocationIndex % allLocations.length];
+      _currentLocationIndex++;
+      
+      // Get previous location for narrative continuity
+      final previousIndex = (_currentLocationIndex - 2) % allLocations.length;
+      final previousLocation = previousIndex >= 0 ? allLocations[previousIndex] : null;
+      
+      // Generate narrative content using storytelling principles
+      final narrativeContent = _narrativeManager.generateLocationNarrative(
+        currentLocation,
+        previousLocation: previousLocation,
+      );
+      
+      // Display what's happening
+      addScrollingText('${narrativeContent.layer.name} view of ${currentLocation.name}');
+      addScrollingText('Voice: ${narrativeContent.voiceRole.name} (${narrativeContent.gravity.description})');
+      
+      // Speak with appropriate voice
+      final success = await _ttsService.speakWithVoice(
+        narrativeContent.text,
+        narrativeContent.voiceRole,
+      );
+      
+      if (!success) {
+        addScrollingText('Failed to speak narrative content');
         return;
       }
       
-      addScrollingText('Reading about ${locationData.location}');
-      final success = await _ttsService.speak(locationData.textContent);
-      
-      if (!success) {
-        addScrollingText('Failed to speak text');
+      // Show location suggestions if available
+      if (narrativeContent.suggestions.isNotEmpty) {
+        final suggestionsText = 'Nearby: ${narrativeContent.suggestions.map((s) => s.location.name).join(', ')}';
+        addScrollingText(suggestionsText);
       }
+      
     } catch (e) {
-      addScrollingText('Error fetching location data');
+      addScrollingText('Error generating narrative content');
+      AppLogger.error('Failed to speak location text: $e');
     }
   }
   

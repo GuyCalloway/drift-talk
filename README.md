@@ -1,22 +1,36 @@
-# Voice AI Assistant
+# Drift - Flutter Voice AI Travel Guide Application
 
-A minimal, context-driven voice AI assistant built with Flutter that provides ultra-brief, intelligent responses based on contextual information using OpenAI's Realtime API.
+A production-ready Flutter voice AI application that creates an interactive travel guide experience for Charles Dickens' London walking tour. The app features dual modes: OpenAI's Realtime API for AI conversations and Text-to-Speech for location-based content delivery.
 
-## User Experience
+## Features Overview
 
-### Core Interaction Model
+### 🎭 **Dual Mode Operation**
+- **AI Mode**: Interactive conversations with OpenAI's Realtime API via WebRTC
+- **TTS Mode**: Text-to-speech reading of curated travel content
+- **Smart Mode Switching**: Automatic connection management when toggling modes
 
-- **Context-First**: Provide background information (location, situation, topic) via context input
-- **Text-Triggered**: Ask questions or make requests via text input
-- **Minimal Response**: Receive one interesting talking point in 1-2 sentences maximum
-- **Silent Waiting**: AI speaks once, then waits quietly for your next input
+### 🖼️ **Dynamic Logo System**
+- **Random Logo Selection**: Chooses between person1.png and person2.png at startup
+- **Pulsating Animation**: Logo pulses when AI is speaking or TTS is reading
+- **Optimized Display**: Clean white circular background with proper image fitting
+
+### 🌍 **Location-Based Intelligence**
+- **Pre-loaded Database**: 16 Dickens walking tour locations in London's Southwark area
+- **Contextual Facts**: Historical information and interesting talking points for each location
+- **Auto-cycling Content**: Configurable intervals (15s, 30s, 45s, 60s, 120s) for automatic fact delivery
 
 ### Example Interaction
 
+**AI Mode:**
 ```
-Context: "Standing outside the British Museum in London"
-User: "What's interesting here?"
-AI: "The museum's Great Court has the largest covered square in Europe."
+User taps central logo → AI provides historical fact about current location
+"Borough Market has been feeding London for over 1,000 years, making it one of the world's oldest food markets."
+```
+
+**TTS Mode:**
+```
+User taps central logo → TTS reads curated Riga tour content
+"But the rest of the city has been preserved incredibly well, and it's absolutely stunning to walk around..."
 ```
 
 ## Features
@@ -67,28 +81,25 @@ Audio Response (Minimal & Contextual)
 ### Key Components
 
 **Presentation Layer**
+- `VoiceChatPage`: Main interface with mode toggle, central logo button, and response display
+- Dynamic logo selection and pulsating animations
+- Mode-aware UI that adapts between AI and TTS functionality
 
-- `VoiceChatPage`: Main interface with input controls and response display
-- `MessageInputWidget`: Text input with collapsible context field
-- State management via Flutter BLoC pattern
+**Service Layer**
+- `LogoSelectionService`: Random selection between person1.png and person2.png at startup
+- `TextToSpeechService`: Flutter TTS integration with optimized speech settings (0.4 rate)
+- `MockLocationTextService`: Curated content delivery for TTS mode (4 Riga tour segments)
+- `LocationContextService`: 16 pre-loaded Dickens walking tour locations
 
 **Business Logic**
-
-- `VoiceChatBloc`: Handles all user interactions and state transitions
-- Connection state management (connecting, connected, processing)
-- Message flow coordination (send, receive, display)
-
-**Domain Layer**
-
-- `SendMessageUseCase`: Validates and routes user requests
-- `VoiceMessage` & `AudioResponse` entities
-- Business rules for message processing
+- `VoiceChatBloc`: Dual-mode state management (AI WebRTC + TTS)
+- Smart connection management with automatic disconnect/reconnect
+- Animation control system that responds to both AI and TTS speaking states
 
 **Data Layer**
-
-- `VoiceChatRepository`: Abstract interface for voice communication
-- `OpenAIWebRTCDataSource`: Real-time API communication
-- WebRTC client for low-latency audio streaming
+- `VoiceChatRepository`: Abstract interface supporting both AI and TTS modes
+- `OpenAIWebRTCDataSource`: Real-time API communication with connection locking
+- WebRTC client optimized for travel guide interactions
 
 ## Project Structure
 
@@ -97,6 +108,11 @@ lib/
 ├── core/                          # Shared infrastructure
 │   ├── di/                        # Dependency injection
 │   ├── network/                   # WebRTC client
+│   ├── services/                  # Business logic services
+│   │   ├── logo_selection_service.dart    # Random logo selection
+│   │   ├── text_to_speech_service.dart    # TTS functionality
+│   │   ├── mock_location_text_service.dart # Curated content
+│   │   └── location_context_service.dart   # Dickens tour locations
 │   ├── errors/                    # Error handling
 │   └── utils/                     # Utilities & logging
 ├── features/
@@ -186,24 +202,39 @@ OPENAI_API_KEY=your_openai_api_key_here
 ### Running the Application
 
 **Web (Recommended)**
-
 ```bash
 flutter run -d chrome
 ```
 
-**Mobile**
-
+**Android (Physical Device)**
 ```bash
-flutter run
+flutter run                    # Debug mode
+flutter build apk && flutter install  # Release mode
+```
+
+**iOS**
+```bash
+flutter run -d ios
 ```
 
 ### Usage Instructions
 
+#### AI Mode (Default)
 1. **Connect**: App automatically connects to OpenAI on startup
-2. **Add Context**: Click the `+` button to add contextual information (location, background, topic)
-3. **Ask Questions**: Type your question or request in the main input field
-4. **Listen**: Receive a brief, contextual audio response
-5. **Continue**: Add new context or ask follow-up questions as needed
+2. **Tap Logo**: Central logo button triggers AI to speak about current Dickens tour location
+3. **Auto-cycling**: Configurable intervals (15s-120s) automatically present new locations
+4. **Listen**: Receive brief, contextual audio responses about historical landmarks
+
+#### TTS Mode
+1. **Toggle Mode**: Switch to TTS mode using the toggle in the app bar
+2. **Tap Logo**: Central logo button reads curated Riga tour content
+3. **Pulsating Animation**: Logo pulses while TTS is speaking
+4. **Optimized Speech**: Slower speech rate (0.4) for better comprehension
+
+#### Mode Switching
+- **Smart Isolation**: Switching modes automatically disconnects/reconnects appropriate services
+- **No Conflicts**: TTS mode stops AI connections; AI mode stops TTS playback
+- **Seamless Transitions**: Maintains app state while switching between modes
 
 ## Cost Considerations
 

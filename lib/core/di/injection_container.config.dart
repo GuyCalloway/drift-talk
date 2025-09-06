@@ -22,6 +22,8 @@ import 'package:voice_ai_app/core/services/logo_selection_service.dart'
     as _i251;
 import 'package:voice_ai_app/core/services/mock_location_text_service.dart'
     as _i542;
+import 'package:voice_ai_app/core/services/narrative_manager_service.dart'
+    as _i445;
 import 'package:voice_ai_app/core/services/optimized_audio_service.dart'
     as _i504;
 import 'package:voice_ai_app/core/services/smart_conversation_manager.dart'
@@ -97,6 +99,8 @@ extension GetItInjectableX on _i174.GetIt {
               gh<_i16.OpenAIWebRTCDataSource>(),
               gh<_i1042.LocationContextService>(),
             ));
+    gh.lazySingleton<_i445.NarrativeManagerService>(() =>
+        _i445.NarrativeManagerService(gh<_i1042.LocationContextService>()));
     gh.factory<_i85.SendMessageUseCase>(
         () => _i85.SendMessageUseCase(gh<_i1063.VoiceChatRepository>()));
     gh.factory<_i30.VoiceChatBloc>(() => _i30.VoiceChatBloc(

@@ -9,18 +9,26 @@ Drift is a production-ready Flutter voice AI application that creates an interac
 This codebase contains a **fully implemented** Flutter voice AI application with the following features:
 
 ### ✅ Core Features Implemented
+- **Dual Mode Operation**: AI Mode (OpenAI Realtime API) + TTS Mode (Text-to-Speech)
 - **WebRTC Integration**: Direct connection to OpenAI Realtime API using flutter_webrtc
+- **Dynamic Logo System**: Random selection between person1.png/person2.png with pulsating animations
 - **Location Context Service**: Pre-loaded database of 16 Dickens walking tour locations
 - **Smart Conversation Management**: Intelligent conversation flow with topic tracking
+- **TTS Integration**: Flutter TTS with optimized speech rate (0.4) for better comprehension
+- **Mode Switching**: Automatic connection management when toggling between AI/TTS modes
 - **Cost Optimization**: Connection management and session optimization to minimize API costs
 - **Audio Processing**: Real-time audio streaming and playback
-- **BLoC State Management**: Complete state management architecture
+- **BLoC State Management**: Complete dual-mode state management architecture
 - **Clean Architecture**: Domain/Data/Presentation layer separation
 - **Error Handling**: Comprehensive error handling and recovery
 - **Dependency Injection**: GetIt + Injectable setup
 
 ### 🎯 Application Purpose
-The app serves as an AI travel guide for exploring Dickens-related locations in London's Southwark area. Users tap a central image to receive interesting facts and historical context about nearby landmarks, delivered via AI-generated speech.
+The app serves as a dual-mode travel guide for exploring Dickens-related locations in London's Southwark area. Users can choose between:
+- **AI Mode**: Interactive conversations with OpenAI about historical landmarks
+- **TTS Mode**: Curated text-to-speech content about travel destinations (currently Riga tour segments)
+
+Users tap a randomly-selected central logo (person1.png or person2.png) to receive location-based content, with pulsating animations indicating when the system is speaking.
 
 ## Architecture Overview
 
@@ -34,6 +42,10 @@ lib/
 │   ├── errors/          # Custom exceptions and error handling
 │   ├── network/         # WebRTC client and connection management
 │   ├── services/        # Business logic services
+│   │   ├── logo_selection_service.dart    # Random logo selection
+│   │   ├── text_to_speech_service.dart    # TTS functionality
+│   │   ├── mock_location_text_service.dart # Curated content
+│   │   └── location_context_service.dart   # Dickens tour locations
 │   ├── storage/         # Secure storage implementation
 │   └── utils/           # Logging and utilities
 ├── features/
@@ -182,11 +194,13 @@ String? getLocationContextByName(String locationName) {
 ## Current UI/UX
 
 The app features a clean, minimal interface:
-- **Central Image**: Large circular image that users tap for facts
-- **Speech Animation**: Pulsing animation when AI is speaking  
-- **Connection Status**: Real-time WebRTC connection indicator
+- **Mode Toggle**: App bar switch between AI and TTS modes
+- **Dynamic Central Logo**: Randomly selected person image (person1.png/person2.png) chosen at app startup
+- **Pulsating Animation**: Logo pulses when AI is speaking (AI mode) or TTS is reading (TTS mode)
+- **Smart Animation Control**: Monitors both AI processing state and TTS speaking state
+- **Connection Status**: Real-time WebRTC connection indicator (AI mode only)
 - **Interval Selector**: Bottom-left dropdown for auto-fact timing
-- **Voice Input**: Top-left microphone button (currently simulated)
+- **Clean White Background**: Optimized logo display with proper image fitting
 
 ## Technical Achievements
 
@@ -208,15 +222,27 @@ The app features a clean, minimal interface:
 - Clear documentation and code comments
 - Type-safe implementation with null safety
 
+## Recent Enhancements Completed
+
+### Dual Mode System
+- **TTS Integration**: Complete text-to-speech system with Flutter TTS
+- **Mode Isolation**: Smart connection management prevents audio conflicts
+- **Optimized Speech**: Slower TTS rate (0.4) for better comprehension
+
+### Visual Enhancements
+- **Random Logo Selection**: Dynamic startup logo selection between two person images
+- **Unified Animation System**: Single pulsating animation responds to both AI and TTS states
+- **Improved Styling**: Clean white circular background with optimized image display
+
 ## Future Enhancement Areas
 
-While the current implementation is production-ready, potential enhancements include:
+Potential enhancements building on current implementation:
 
-1. **Voice Input Processing**: Real voice-to-text for user interactions
-2. **Multi-voice Conversations**: Male/female voice alternating discussions
-3. **Enhanced Background Noise Handling**: VAD (Voice Activity Detection)
-4. **Offline Mode**: Local context storage and playback
-5. **User Personalization**: Learning preferences and interests
+1. **Storytelling Integration**: Implement the "gravitational field" narrative system (see STORYTELLING.md)
+2. **Multi-voice Conversations**: Male/female voice alternating discussions as outlined in storytelling design
+3. **Movement-Responsive Content**: GPS-based pace detection and adaptive storytelling
+4. **Enhanced Background Noise Handling**: VAD (Voice Activity Detection)
+5. **User Personalization**: Familiarity-based content depth adjustment
 
 ## API Cost Management
 

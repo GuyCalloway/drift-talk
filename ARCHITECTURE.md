@@ -6,16 +6,16 @@
 ┌─────────────────────────────────────────────────────────────┐
 │                    PRESENTATION LAYER                       │
 ├─────────────────────────────────────────────────────────────┤
-│  VoiceChatPage  │  AudioVisualization  │  ErrorDisplay     │
-│  TextInputField │  PlaybackControls    │  LoadingStates    │
+│  VoiceChatPage  │  ModeToggle          │  ErrorDisplay     │
+│  DynamicLogo    │  PulsatingAnimation  │  LoadingStates    │
 └─────────────────┬───────────────────────┬───────────────────┘
                   │                       │
 ┌─────────────────┴───────────────────────┴───────────────────┐
 │                      BLOC LAYER                             │
 ├─────────────────────────────────────────────────────────────┤
-│  VoiceChatBloc  │  AudioBloc           │  ConnectionBloc    │
-│  - States       │  - Recording         │  - WebSocket       │
-│  - Events       │  - Playback          │  - Authentication  │
+│  VoiceChatBloc  │  DualModeLogic       │  AnimationControl  │
+│  - AI States    │  - TTS Integration   │  - AI Animation    │
+│  - TTS States   │  - Mode Switching    │  - TTS Animation   │
 └─────────────────┬───────────────────────┬───────────────────┘
                   │                       │
 ┌─────────────────┴───────────────────────┴───────────────────┐
@@ -30,32 +30,52 @@
 │                      DATA LAYER                             │
 ├─────────────────────────────────────────────────────────────┤
 │  DataSources    │  Models              │  Services          │
-│  - WebSocket    │  - MessageModel      │  - AudioService    │
-│  - Local Cache  │  - AudioModel        │  - SecurityService │
+│  - WebRTC       │  - MessageModel      │  - LogoSelection   │
+│  - MockLocation │  - AudioModel        │  - TextToSpeech    │
+│  - TTS Content  │  - LocationData      │  - LocationContext │
 └─────────────────────────────────────────────────────────────┘
 ```
 
 ## Data Flow
 
-1. **User Input**: User enters text in the input field
-2. **State Management**: VoiceChatBloc receives input event
-3. **Use Case**: SendMessage use case processes the request
-4. **WebSocket**: Message sent to OpenAI Realtime API via WebSocket
-5. **Audio Response**: Receives audio stream from OpenAI
-6. **Audio Processing**: AudioService processes and plays audio
-7. **UI Update**: Bloc updates UI with loading, success, or error states
+### AI Mode Flow
+1. **User Interaction**: User taps central logo button
+2. **Location Selection**: App cycles through Dickens tour locations
+3. **State Management**: VoiceChatBloc receives interaction event
+4. **Context Building**: LocationContextService provides historical context
+5. **WebRTC**: Message sent to OpenAI Realtime API via WebRTC
+6. **Audio Response**: Receives audio stream from OpenAI
+7. **Animation**: Logo pulsates while AI is speaking
+8. **UI Update**: Bloc updates UI with response states
+
+### TTS Mode Flow
+1. **User Interaction**: User taps central logo button
+2. **Content Selection**: MockLocationTextService provides curated content
+3. **TTS Processing**: TextToSpeechService converts text to speech
+4. **Animation Monitoring**: Timer monitors TTS speaking state
+5. **Logo Animation**: Pulsating animation during TTS playback
+6. **Completion**: Animation stops when TTS finishes
+
+### Mode Switching Flow
+1. **Mode Toggle**: User switches between AI/TTS modes
+2. **Connection Management**: Auto-disconnect/reconnect appropriate services
+3. **Animation Control**: Start/stop relevant animation monitoring
+4. **UI State Update**: Update interface to reflect current mode
 
 ## Component Responsibilities
 
 ### Presentation Layer
-- **VoiceChatPage**: Main UI screen with text input and audio controls
-- **AudioVisualization**: Real-time audio waveform display
+- **VoiceChatPage**: Main UI screen with mode toggle, dynamic logo, and controls
+- **Mode Toggle**: Switch between AI and TTS modes in app bar
+- **Dynamic Logo**: Random selection between person1.png/person2.png at startup
+- **Pulsating Animation**: Unified animation system for both AI and TTS states
 - **Shared Widgets**: Reusable UI components
 
 ### Business Logic (BLoC)
-- **VoiceChatBloc**: Manages conversation state and OpenAI communication
-- **AudioBloc**: Handles audio recording and playback states
-- **ConnectionBloc**: Manages WebSocket connection lifecycle
+- **VoiceChatBloc**: Dual-mode state management for AI/TTS operations
+- **Mode Management**: Smart switching between AI WebRTC and TTS systems
+- **Animation Control**: Monitors both AI processing and TTS speaking states
+- **Connection Lifecycle**: WebRTC connect/disconnect based on active mode
 
 ### Domain Layer
 - **Entities**: Core business objects (VoiceMessage, AudioResponse)
@@ -63,16 +83,21 @@
 - **Repository Interfaces**: Contracts for data operations
 
 ### Data Layer
-- **WebSocket Service**: Real-time communication with OpenAI
-- **Audio Service**: Platform-specific audio operations
+- **WebRTC Service**: Real-time communication with OpenAI Realtime API
+- **TextToSpeech Service**: Flutter TTS integration with optimized settings
+- **LogoSelection Service**: Random startup logo selection system
+- **LocationContext Service**: 16 pre-loaded Dickens tour locations
+- **MockLocation Service**: Curated TTS content (4 Riga tour segments)
 - **Security Service**: Secure key storage and authentication
 
 ## Technology Stack
 
-- **State Management**: Flutter BLoC
+- **State Management**: Flutter BLoC (dual-mode architecture)
 - **Dependency Injection**: GetIt + Injectable
-- **Audio**: record + just_audio + audio_waveforms
-- **WebSocket**: web_socket_channel
-- **HTTP**: Dio
+- **WebRTC**: flutter_webrtc (OpenAI Realtime API)
+- **Text-to-Speech**: flutter_tts (optimized speech rate)
+- **Animation**: Flutter AnimationController with Timer monitoring
+- **Asset Management**: Random logo selection from assets
+- **HTTP**: Dio (for future API endpoints)
 - **Security**: flutter_secure_storage
 - **Testing**: bloc_test + mockito
